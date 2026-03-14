@@ -156,7 +156,6 @@ export async function POST(req: NextRequest) {
           `- Image generation (new image from text prompt): gpt-image-1.`,
           `- Image editing (modify a previously generated image): gpt-image-1 via /images/edits.`,
           `- Persistent memory via mem0 remembers context from past conversations.`,
-          `- Each response includes a speed profiler: TTFT, total time, tokens/sec, intent time, mem0 time, API time, and model used.`,
         ].join("\n") : null,
         memContext ? `Recalled context:\n${memContext}` : "",
       ].filter(Boolean).join("\n"),
