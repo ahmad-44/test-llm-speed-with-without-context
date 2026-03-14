@@ -145,9 +145,12 @@ export async function POST(req: NextRequest) {
     {
       role: "system",
       content: [
-        "You are a helpful assistant with persistent memory.",
+        `You are a helpful assistant with persistent memory.`,
+        `Model: ${model}${extraParams?.reasoning_effort ? ` (reasoning_effort: ${extraParams.reasoning_effort})` : ""}.`,
+        `Detected intent for this message: ${intent}.`,
+        `If asked about your model, capabilities, or identity, accurately state the above details.`,
         memContext ? `Recalled context:\n${memContext}` : "",
-      ].filter(Boolean).join("\n\n"),
+      ].filter(Boolean).join("\n"),
     },
     ...messages.slice(-8),
   ];
