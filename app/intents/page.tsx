@@ -217,21 +217,38 @@ function IntentDocs() {
       {/* 15 classes reference */}
       <div style={D.card}>
         <div style={D.h2}><span>🗂</span> Built-in Classes Reference</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+
+        <p style={{ ...D.p, marginBottom: 10 }}>
+          <strong style={{ color: "#4ade80" }}>Actively working in this app:</strong>
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 16 }}>
           {[
-            { name: "audio_generation", color: "#f59e0b" }, { name: "code", color: "#3b82f6" },
-            { name: "document_edit", color: "#8b5cf6" }, { name: "document_generation", color: "#6366f1" },
-            { name: "file_analysis", color: "#06b6d4" }, { name: "generate_spreadsheet", color: "#22c55e" },
-            { name: "image_edit", color: "#ec4899" }, { name: "image_generation", color: "#f97316" },
-            { name: "low_effort", color: "#94a3b8" }, { name: "models_information", color: "#a855f7" },
-            { name: "pdf_generation", color: "#ef4444" }, { name: "ppt_generation", color: "#fb923c" },
-            { name: "reasoning", color: "#7c6af7" }, { name: "video_generation", color: "#14b8a6" },
-            { name: "web_surfing", color: "#0ea5e9" },
+            { name: "image_generation", color: "#f97316" },
+            { name: "image_edit", color: "#ec4899" },
+            { name: "reasoning", color: "#7c6af7" },
+            { name: "low_effort", color: "#94a3b8" },
+            { name: "models_information", color: "#a855f7" },
           ].map(({ name, color }) => (
             <span key={name} style={D.chip(color)}>{name}</span>
           ))}
         </div>
-        <p style={{ ...D.p, marginTop: 12, marginBottom: 0 }}>Click any class in the sidebar to view and manage its examples.</p>
+
+        <p style={{ ...D.p, marginBottom: 10 }}>
+          <strong style={{ color: "#666" }}>Demo only — routed to gpt-4o but not fully implemented:</strong>
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 12 }}>
+          {[
+            { name: "audio_generation", color: "#f59e0b" }, { name: "code", color: "#3b82f6" },
+            { name: "document_edit", color: "#8b5cf6" }, { name: "document_generation", color: "#6366f1" },
+            { name: "file_analysis", color: "#06b6d4" }, { name: "generate_spreadsheet", color: "#22c55e" },
+            { name: "pdf_generation", color: "#ef4444" }, { name: "ppt_generation", color: "#fb923c" },
+            { name: "video_generation", color: "#14b8a6" }, { name: "web_surfing", color: "#0ea5e9" },
+          ].map(({ name, color }) => (
+            <span key={name} style={{ ...D.chip(color), opacity: 0.5 }}>{name}</span>
+          ))}
+        </div>
+
+        <p style={{ ...D.p, marginTop: 4, marginBottom: 0 }}>The demo classes are included to show how the classifier scales. You can add your own examples, rename them, or wire them up to any model or tool in your own app.</p>
       </div>
     </div>
   );
