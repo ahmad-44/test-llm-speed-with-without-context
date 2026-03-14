@@ -888,7 +888,7 @@ export default function ChatPage() {
       <div style={{ display: "flex", borderBottom: "1px solid #1e1e1e", background: "#0d0d0d", flexShrink: 0 }}>
         <Tab active={mode === "bare"} onClick={() => setMode("bare")} label="No Context" badge="fast" color="#2ea87e" />
         <Tab active={mode === "context"} onClick={() => setMode("context")} label="With Memory" badge="mem0" color="#7c6af7" />
-        <Tab active={mode === "intent"} onClick={() => setMode("intent")} label="Chat + Mem0 + Image Gen/Edit" badge="intent + mem0" color="#e5a64b" featured />
+        <Tab active={mode === "intent"} onClick={() => setMode("intent")} label="Memory + Context + Image Gen/Edit" badge="intent + mem0" color="#e5a64b" featured />
       </div>
 
       {mode === "context" && (
