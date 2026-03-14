@@ -19,12 +19,12 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const className = searchParams.get("class");
 
-  const query = supabase
+  let query = supabase
     .from("intent_examples")
     .select("id, class_name, message, created_at")
     .order("created_at", { ascending: true });
 
-  if (className) query.eq("class_name", className);
+  if (className) query = query.eq("class_name", className);
 
   const { data, error } = await query;
   if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });

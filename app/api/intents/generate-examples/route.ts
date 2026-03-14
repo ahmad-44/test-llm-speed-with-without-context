@@ -92,7 +92,7 @@ export async function POST(req: Request) {
 
   const { error } = await supabase
     .from("intent_examples")
-    .upsert(rows, { onConflict: "class_name,message", ignoreDuplicates: true });
+    .insert(rows);
   if (error) return Response.json({ error: error.message }, { status: 500 });
 
   return Response.json({ ok: true, generated: rows.length });
