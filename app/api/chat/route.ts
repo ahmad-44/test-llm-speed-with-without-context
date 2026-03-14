@@ -7,19 +7,18 @@ const MODEL = "gpt-5.4-2026-03-05";
 
 export async function POST(req: NextRequest) {
   const { messages, useContext } = await req.json();
+  const encoder = new TextEncoder();
 
   let apiMessages: { role: string; content: string }[];
+  let mem0Ms = 0;
 
   if (!useContext) {
-    // ── No context mode: send only the current message ─────────────────────
     apiMessages = [messages.at(-1)];
   } else {
-    // ── Memory mode: mem0 search + last 3 messages ──────────────────────────
     const currentQuery = messages.at(-1)?.content as string;
 
-    // Save the previous complete exchange to mem0 (start of next request = full pair available)
-    // Walk backwards to find the most recent user+assistant pair before the current user message
-    const history = messages.slice(0, -1); // everything except current user msg
+    // Save previous exchange to mem0
+    const history = messages.slice(0, -1);
     if (history.length >= 2) {
       const lastAssistant = history.at(-1);
       const lastUser = history.at(-2);
@@ -28,14 +27,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Retrieve relevant memories
+    // Search memories — timed
     let memContext = "";
+    const mem0Start = Date.now();
     try {
       const memories = await mem0.search(currentQuery, { userId: USER_ID, limit: 8 });
       if (Array.isArray(memories) && memories.length > 0) {
         memContext = memories.map((m) => m.memory ?? "").filter(Boolean).join("\n");
       }
     } catch {}
+    mem0Ms = Date.now() - mem0Start;
 
     apiMessages = [
       {
@@ -45,10 +46,12 @@ export async function POST(req: NextRequest) {
           memContext ? `Recalled memories from earlier in the conversation:\n${memContext}` : "",
         ].filter(Boolean).join("\n\n"),
       },
-      ...messages.slice(-8), // wider window so recent context isn't lost
+      ...messages.slice(-8),
     ];
   }
 
+  // Call OpenAI — timed (measures server→OpenAI connect + TTFT on server side)
+  const apiStart = Date.now();
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -57,6 +60,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({ model: MODEL, messages: apiMessages, stream: true }),
   });
+  const apiConnectMs = Date.now() - apiStart;
 
   if (!response.ok) {
     const errText = await response.text();
@@ -68,7 +72,31 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  return new Response(response.body, {
+  // Stream: inject timing event first, then pipe OpenAI SSE
+  const stream = new ReadableStream({
+    async start(controller) {
+      // First event carries server-side timing
+      const timingEvent = `data: ${JSON.stringify({
+        __timing: { mem0_ms: mem0Ms, api_connect_ms: apiConnectMs },
+      })}\n\n`;
+      controller.enqueue(encoder.encode(timingEvent));
+
+      // Pipe the rest of the OpenAI stream through
+      const reader = response.body!.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          controller.enqueue(value);
+        }
+      } finally {
+        reader.releaseLock();
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache, no-transform",

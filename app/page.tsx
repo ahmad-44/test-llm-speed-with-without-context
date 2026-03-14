@@ -5,10 +5,19 @@ import { useState, useRef, useEffect, useCallback } from "react";
 type Role = "user" | "assistant";
 type Mode = "context" | "bare";
 
+interface Profile {
+  ttft: number;      // client: ms from send → first token
+  total: number;     // client: ms from send → last token
+  tokens: number;    // token count
+  tokPerSec: number; // tokens / streaming duration
+  mem0Ms: number;    // server: mem0 search time
+  apiMs: number;     // server: OpenAI connect time
+}
+
 interface Message {
   role: Role;
   content: string;
-  ms?: number; // response time in ms (assistant only)
+  profile?: Profile;
 }
 
 // ── Markdown renderer ────────────────────────────────────────────────────────
@@ -61,6 +70,46 @@ function MessageContent({ content }: { content: string }) {
   if (cursor < escaped.length)
     nodes.push(<span key={k++} className="prose" dangerouslySetInnerHTML={{ __html: formatInline(escaped.slice(cursor)) }} />);
   return <>{nodes}</>;
+}
+
+// ── Speed profiler table ─────────────────────────────────────────────────────
+
+function fmtMs(ms: number) {
+  return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(2)}s`;
+}
+
+function ProfileTable({ profile, accentColor, isContext }: { profile: Profile; accentColor: string; isContext: boolean }) {
+  const cells = [
+    { label: "TTFT",   value: fmtMs(profile.ttft),             title: "Time to first token (client)" },
+    { label: "Total",  value: fmtMs(profile.total),            title: "Total response time (client)" },
+    { label: "Tokens", value: String(profile.tokens),          title: "Tokens streamed" },
+    { label: "Tok/s",  value: profile.tokPerSec.toFixed(1),    title: "Tokens per second" },
+    ...(isContext ? [{ label: "mem0", value: fmtMs(profile.mem0Ms), title: "mem0 memory search (server)" }] : []),
+    { label: "API",    value: fmtMs(profile.apiMs),            title: "OpenAI connect time (server)" },
+  ];
+
+  return (
+    <div style={{ marginTop: 10, display: "flex", borderRadius: 6, border: "1px solid #222", overflow: "hidden", width: "fit-content", maxWidth: "100%" }}>
+      {cells.map((cell, i) => (
+        <div
+          key={cell.label}
+          title={cell.title}
+          style={{
+            padding: "5px 10px",
+            borderRight: i < cells.length - 1 ? "1px solid #222" : "none",
+            minWidth: 52,
+          }}
+        >
+          <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>
+            {cell.label}
+          </div>
+          <div style={{ fontSize: 12, color: accentColor, fontFamily: "monospace", fontWeight: 600 }}>
+            {cell.value}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ── Tab button ───────────────────────────────────────────────────────────────
@@ -195,10 +244,8 @@ function ChatPanel({
                       <MessageContent content={msg.content} />
                     )}
                   </div>
-                  {msg.role === "assistant" && msg.ms !== undefined && (
-                    <div style={{ fontSize: 10, color: "#444", marginTop: 4, paddingLeft: 2 }}>
-                      {msg.ms < 1000 ? `${msg.ms}ms` : `${(msg.ms / 1000).toFixed(2)}s`}
-                    </div>
+                  {msg.role === "assistant" && msg.profile && (
+                    <ProfileTable profile={msg.profile} accentColor={accentColor} isContext={isContext} />
                   )}
                 </div>
               </div>
@@ -312,6 +359,9 @@ export default function ChatPage() {
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let assistantContent = "";
+      let firstTokenAt: number | null = null;
+      let tokenCount = 0;
+      let serverTiming = { mem0Ms: 0, apiMs: 0 };
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
       let buffer = "";
@@ -329,8 +379,15 @@ export default function ChatPage() {
           if (data === "[DONE]") continue;
           try {
             const json = JSON.parse(data);
+            // Server timing event
+            if (json.__timing) {
+              serverTiming = { mem0Ms: json.__timing.mem0_ms ?? 0, apiMs: json.__timing.api_connect_ms ?? 0 };
+              continue;
+            }
             const token = json.choices?.[0]?.delta?.content;
             if (token) {
+              if (!firstTokenAt) firstTokenAt = Date.now();
+              tokenCount++;
               assistantContent += token;
               setMessages((prev) => {
                 const updated = [...prev];
@@ -342,11 +399,16 @@ export default function ChatPage() {
         }
       }
 
-      // stamp response time
-      const elapsed = Date.now() - startTime;
+      // Build profile
+      const total = Date.now() - startTime;
+      const ttft = firstTokenAt ? firstTokenAt - startTime : total;
+      const streamDuration = total - ttft;
+      const tokPerSec = streamDuration > 50 ? (tokenCount / streamDuration) * 1000 : 0;
+      const profile: Profile = { ttft, total, tokens: tokenCount, tokPerSec, ...serverTiming };
+
       setMessages((prev) => {
         const updated = [...prev];
-        updated[updated.length - 1] = { role: "assistant", content: assistantContent, ms: elapsed };
+        updated[updated.length - 1] = { role: "assistant", content: assistantContent, profile };
         return updated;
       });
     } catch (err: unknown) {
