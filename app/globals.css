@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+* {
+  box-sizing: border-box;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body,
+#__next {
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #0f0f0f;
+  color: #e8e8e8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
 }
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2e2e2e;
+  border-radius: 2px;
+}
+
+/* Code blocks */
+pre {
+  background: #111;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0.75rem 0;
+}
+
+code {
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+}
+
+p code,
+li code {
+  background: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 13px;
+}
+
+/* Markdown content */
+.prose p { margin: 0.5rem 0; }
+.prose p:first-child { margin-top: 0; }
+.prose p:last-child { margin-bottom: 0; }
+.prose ul, .prose ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+.prose li { margin: 0.2rem 0; }
+.prose h1, .prose h2, .prose h3 { font-weight: 600; margin: 1rem 0 0.5rem; }
+.prose h1:first-child, .prose h2:first-child, .prose h3:first-child { margin-top: 0; }
+.prose blockquote { border-left: 3px solid #7c6af7; padding-left: 1rem; color: #888; margin: 0.5rem 0; }
+.prose hr { border-color: #2e2e2e; margin: 1rem 0; }
+.prose strong { color: #fff; }
+.prose a { color: #9484ff; text-decoration: underline; }
