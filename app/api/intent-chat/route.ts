@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
       content: [
         `You are an intelligent assistant with persistent memory and intent-aware model routing.`,
         intent === "models_information" ? [
-          `Current model: ${model}${extraParams?.reasoning_effort ? ` (reasoning_effort: ${extraParams.reasoning_effort})` : ""}.`,
+          `You are running as model: ${model}${extraParams?.reasoning_effort ? ` (reasoning_effort: ${extraParams.reasoning_effort})` : ""}.`,
           `You run on an intent classifier that automatically picks the best model per message:`,
           `- Text tasks (code, documents, analysis, research, spreadsheets, PDFs, presentations): gpt-4o.`,
           `- Reasoning and complex problem-solving: gpt-5.4-2026-03-05 (reasoning_effort:high).`,
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
           `- Image editing (modify a previously generated image): gpt-image-1 via /images/edits.`,
           `- Persistent memory via mem0 remembers context from past conversations.`,
           `- Each response includes a speed profiler: TTFT, total time, tokens/sec, intent time, mem0 time, API time, and model used.`,
-        ].join("\n") : `Current model: ${model}${extraParams?.reasoning_effort ? ` (reasoning_effort: ${extraParams.reasoning_effort})` : ""}.`,
+        ].join("\n") : null,
         memContext ? `Recalled context:\n${memContext}` : "",
       ].filter(Boolean).join("\n"),
     },
