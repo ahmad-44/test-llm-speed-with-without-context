@@ -64,10 +64,9 @@ export async function POST(req: NextRequest) {
     (async () => {
       const t = Date.now();
       try {
-        const r = await mem0.search(currentMessage, { userId: USER_ID, limit: 5 });
-        mem0Ms = Date.now() - t;
-        return r;
+        return await mem0.search(currentMessage, { userId: USER_ID, limit: 5 });
       } catch { return []; }
+      finally { mem0Ms = Date.now() - t; }
     })(),
   ]);
 
