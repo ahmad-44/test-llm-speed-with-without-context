@@ -54,16 +54,22 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
 
   // Classify intent and retrieve memories in parallel
-  const classifyStart = Date.now();
-  const [{ intent, scores }, memoriesResult] = await Promise.all([
-    classifyIntent(currentMessage),
+  let mem0Ms = 0;
+  const [{ intent, scores, classifyMs }, memoriesResult] = await Promise.all([
     (async () => {
+      const t = Date.now();
+      const result = await classifyIntent(currentMessage);
+      return { ...result, classifyMs: Date.now() - t };
+    })(),
+    (async () => {
+      const t = Date.now();
       try {
-        return await mem0.search(currentMessage, { userId: USER_ID, limit: 5 });
+        const r = await mem0.search(currentMessage, { userId: USER_ID, limit: 5 });
+        mem0Ms = Date.now() - t;
+        return r;
       } catch { return []; }
     })(),
   ]);
-  const classifyMs = Date.now() - classifyStart;
 
   const { model, extraParams } = getIntentModel(intent);
   const isImage = model === "gpt-image-1";
@@ -134,7 +140,7 @@ export async function POST(req: NextRequest) {
         imageUrl,
         intent,
         scores,
-        timing: { classifyMs, apiMs, mem0Ms: 0 },
+        timing: { classifyMs, apiMs, mem0Ms },
       }),
       { headers: { "Content-Type": "application/json" } }
     );
@@ -185,7 +191,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       // Timing + intent metadata as first event
       controller.enqueue(encoder.encode(
-        `data: ${JSON.stringify({ __meta: { intent, scores, timing: { classifyMs, apiMs, mem0Ms: 0 } } })}\n\n`
+        `data: ${JSON.stringify({ __meta: { intent, scores, timing: { classifyMs, apiMs, mem0Ms } } })}\n\n`
       ));
 
       const reader = response.body!.getReader();
