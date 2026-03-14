@@ -170,16 +170,16 @@ export function getIntentColor(name: string): string {
   return INTENT_CLASSES.find((c) => c.name === name)?.color ?? "#7c6af7";
 }
 
-export function getIntentModel(intentName: string): string {
+export function getIntentModel(intentName: string): { model: string; extraParams?: Record<string, unknown> } {
   switch (intentName) {
     case "image_generation":
     case "image_edit":
-      return "gpt-image-1";
+      return { model: "gpt-image-1" };
     case "reasoning":
-      return "o3-mini";
+      return { model: "gpt-5.4-2026-03-05", extraParams: { reasoning_effort: "high" } };
     case "low_effort":
-      return "gpt-4o-mini";
+      return { model: "gpt-5.4-2026-03-05", extraParams: { reasoning_effort: "low" } };
     default:
-      return "gpt-4o";
+      return { model: "gpt-4o" };
   }
 }

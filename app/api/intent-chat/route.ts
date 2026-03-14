@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   ]);
   const classifyMs = Date.now() - classifyStart;
 
-  const model = getIntentModel(intent);
+  const { model, extraParams } = getIntentModel(intent);
   const isImage = model === "gpt-image-1";
 
   // Save previous exchange to mem0
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ model, messages: apiMessages, stream: true }),
+    body: JSON.stringify({ model, messages: apiMessages, stream: true, ...extraParams }),
   });
   const apiMs = Date.now() - apiStart;
 
