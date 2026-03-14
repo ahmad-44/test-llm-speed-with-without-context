@@ -357,7 +357,7 @@ export default function IntentsPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <a href="/" style={{ color: S.muted, fontSize: 12, textDecoration: "none" }}>← chat</a>
           <span style={{ color: S.border }}>|</span>
-          <span style={{ fontWeight: 700, fontSize: 15 }}>Intent Classes</span>
+          <a href="/intents" style={{ fontWeight: 700, fontSize: 15, color: S.text, textDecoration: "none" }}>Intent Classes</a>
           <span style={{ fontSize: 12, color: S.muted }}>{classes.length} classes</span>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
