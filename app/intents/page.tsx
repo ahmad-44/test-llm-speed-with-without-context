@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { getIntentColor } from "@/lib/intents";
+import { getIntentColor, getIntentModel } from "@/lib/intents";
 
 interface IntentClass {
   id: string;
@@ -29,6 +29,32 @@ function Badge({ name, color }: { name: string; color: string }) {
   return (
     <span style={{ background: color + "22", color, border: `1px solid ${color}44`, borderRadius: 5, padding: "2px 8px", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
       {name}
+    </span>
+  );
+}
+
+const MODEL_META: Record<string, { label: string; color: string; note?: string }> = {
+  "gpt-image-1":        { label: "gpt-image-1",        color: "#f97316" },
+  "gpt-5.4-2026-03-05": { label: "gpt-5.4",            color: "#7c6af7" },
+  "gpt-4o":             { label: "gpt-4o",             color: "#3b82f6" },
+  "gpt-4o-mini":        { label: "gpt-4o-mini",        color: "#94a3b8" },
+  "o3-mini":            { label: "o3-mini",            color: "#a855f7" },
+};
+
+function ModelBadge({ intentName }: { intentName: string }) {
+  const { model, extraParams } = getIntentModel(intentName);
+  const meta = MODEL_META[model] ?? { label: model, color: "#666" };
+  const effort = extraParams?.reasoning_effort as string | undefined;
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+      <span style={{ background: meta.color + "1a", color: meta.color, border: `1px solid ${meta.color}33`, borderRadius: 4, padding: "1px 6px", fontSize: 10, fontWeight: 600, whiteSpace: "nowrap", fontFamily: "monospace" }}>
+        {meta.label}
+      </span>
+      {effort && (
+        <span style={{ background: "#1a1a1a", color: "#555", border: "1px solid #2a2a2a", borderRadius: 4, padding: "1px 5px", fontSize: 10, fontFamily: "monospace" }}>
+          {effort}
+        </span>
+      )}
     </span>
   );
 }
@@ -371,9 +397,10 @@ export default function IntentsPage() {
                     {cls.name}
                   </span>
                 </div>
-                <span style={{ fontSize: 11, color: S.faint, flexShrink: 0, marginLeft: 6 }}>
-                  {exampleCount(cls.name)}
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, marginLeft: 6 }}>
+                  <ModelBadge intentName={cls.name} />
+                  <span style={{ fontSize: 11, color: S.faint }}>{exampleCount(cls.name)}</span>
+                </div>
               </div>
             ))
           )}
@@ -404,6 +431,7 @@ export default function IntentsPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
                   <span style={{ fontSize: 12, color: S.muted }}>Top match:</span>
                   <Badge name={testResult.intent} color={getIntentColor(testResult.intent)} />
+                  <ModelBadge intentName={testResult.intent} />
                   <span style={{ fontSize: 12, color: S.muted }}>
                     {((testResult.scores[0]?.score ?? 0) * 100).toFixed(1)}% confidence
                   </span>
@@ -429,6 +457,7 @@ export default function IntentsPage() {
             <section>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                 <Badge name={selected} color={selectedClass.color} />
+                <ModelBadge intentName={selected} />
                 <span style={{ fontSize: 13, color: S.muted }}>{selectedClass.description}</span>
                 <button onClick={() => deleteClass(selected)} style={{ marginLeft: "auto", background: "none", border: "none", color: "#ef444466", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
                   Delete class
