@@ -97,7 +97,7 @@ function IntentDocs() {
           ].map(([num, color, title, desc]) => (
             <div key={num} style={{ display: "flex", gap: 14, paddingBottom: 16, borderLeft: `2px solid #1e1e1e`, marginLeft: 12, paddingLeft: 20, position: "relative" }}>
               <div style={{ position: "absolute", left: -9, top: 0, width: 16, height: 16, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#000", flexShrink: 0 }}>{num}</div>
-              <div>
+              <div> 
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#e8e8e8", marginBottom: 3 }}>{title}</div>
                 <div style={{ fontSize: 12, color: "#888", lineHeight: 1.65 }}>{desc}</div>
               </div>
@@ -232,6 +232,10 @@ export default function IntentsPage() {
   const [newExample, setNewExample] = useState("");
   const [adding, setAdding] = useState(false);
 
+  // Generate examples
+  const [generating, setGenerating] = useState(false);
+  const [generateCount, setGenerateCount] = useState(500);
+
   // Edit example
   const [editId, setEditId] = useState<string | null>(null);
   const [editMsg, setEditMsg] = useState("");
@@ -314,6 +318,19 @@ export default function IntentsPage() {
     loadClasses();
   }
 
+  async function generateExamples() {
+    if (!selected) return;
+    setGenerating(true);
+    await fetch("/api/intents/generate-examples", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ class_name: selected, count: generateCount }),
+    });
+    await loadExamples(selected);
+    await loadClasses();
+    setGenerating(false);
+  }
+
   async function saveEdit(id: string) {
     await fetch("/api/intents/examples", {
       method: "PUT",
@@ -381,7 +398,7 @@ export default function IntentsPage() {
           {loading ? (
             <div style={{ padding: 20, color: S.faint, fontSize: 13 }}>Loading…</div>
           ) : (
-            classes.map((cls) => (
+            classes.map((cls, idx) => (
               <div
                 key={cls.name}
                 onClick={() => setSelected(selected === cls.name ? null : cls.name)}
@@ -393,6 +410,7 @@ export default function IntentsPage() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <span style={{ fontSize: 11, color: S.faint, fontFamily: "monospace", minWidth: 18, textAlign: "right", flexShrink: 0 }}>{idx + 1}</span>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", background: cls.color, flexShrink: 0 }} />
                   <span style={{ fontSize: 13, fontWeight: selected === cls.name ? 600 : 400, color: S.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {cls.name}
@@ -466,7 +484,7 @@ export default function IntentsPage() {
               </div>
 
               {/* Add example */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                 <input
                   value={newExample}
                   onChange={(e) => setNewExample(e.target.value)}
@@ -479,11 +497,28 @@ export default function IntentsPage() {
                 </button>
               </div>
 
+              {/* AI generate examples */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
+                <input
+                  type="number"
+                  min={10}
+                  max={1000}
+                  value={generateCount}
+                  onChange={(e) => setGenerateCount(Number(e.target.value))}
+                  style={{ width: 80, background: S.surface2, border: `1px solid ${S.border}`, borderRadius: 8, color: S.text, padding: "8px 10px", fontSize: 13, outline: "none", fontFamily: "inherit" }}
+                />
+                <button onClick={generateExamples} disabled={generating} style={btnStyle("#1a1a2a", "#7c6af7")}>
+                  {generating ? "Generating…" : "✨ AI Generate Examples"}
+                </button>
+                <span style={{ fontSize: 11, color: S.muted }}>Uses GPT-4o-mini to generate diverse examples</span>
+              </div>
+
               {/* Examples list */}
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {examples.length === 0 && <div style={{ color: S.faint, fontSize: 13 }}>No examples yet.</div>}
-                {examples.map((ex) => (
+                {examples.map((ex, idx) => (
                   <div key={ex.id} style={{ background: S.surface, border: `1px solid ${S.border}`, borderRadius: 8, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 11, color: S.faint, fontFamily: "monospace", minWidth: 28, textAlign: "right", flexShrink: 0 }}>{idx + 1}</span>
                     {editId === ex.id ? (
                       <>
                         <input
