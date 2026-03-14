@@ -54,6 +54,8 @@ export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
 
   // Classify intent and retrieve memories in parallel
+  // Skip mem0 on first message — nothing stored yet
+  const isFirstMessage = messages.length <= 1;
   let mem0Ms = 0;
   const [{ intent, scores, classifyMs }, memoriesResult] = await Promise.all([
     (async () => {
@@ -62,6 +64,7 @@ export async function POST(req: NextRequest) {
       return { ...result, classifyMs: Date.now() - t };
     })(),
     (async () => {
+      if (isFirstMessage) return [];
       const t = Date.now();
       try {
         return await mem0.search(currentMessage, { userId: USER_ID, limit: 5 });

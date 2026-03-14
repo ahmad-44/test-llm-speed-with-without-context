@@ -144,7 +144,7 @@ mem0 provides **semantic long-term memory** — not a raw chat history dump, but
 **How it works:**
 
 1. **Storage** — At the start of each request, the previous `user + assistant` exchange is saved to mem0 asynchronously (fire and forget, does not block the response)
-2. **Retrieval** — mem0 searches all stored memories for the current message using semantic similarity, returns the top 5 most relevant memories
+2. **Retrieval** — mem0 searches all stored memories for the current message using semantic similarity, returns the top 5 most relevant memories. **Skipped on the first message** — nothing is stored yet so the search would be wasted latency.
 3. **Injection** — Retrieved memories are formatted as `Recalled context:` in the system prompt before the AI call
 
 **Key difference vs naive full-history sending:**
