@@ -33,6 +33,160 @@ function Badge({ name, color }: { name: string; color: string }) {
   );
 }
 
+function IntentDocs() {
+  const D = {
+    section: { marginBottom: 28 } as React.CSSProperties,
+    h2: { fontSize: 13, fontWeight: 700, color: "#e8e8e8", marginBottom: 10, display: "flex", alignItems: "center", gap: 8 } as React.CSSProperties,
+    p: { fontSize: 13, color: "#999", lineHeight: 1.7, marginBottom: 8 } as React.CSSProperties,
+    li: { fontSize: 13, color: "#999", lineHeight: 1.9, paddingLeft: 16, position: "relative" } as React.CSSProperties,
+    code: { background: "#1e1e1e", border: "1px solid #2a2a2a", borderRadius: 4, padding: "1px 6px", fontFamily: "monospace", fontSize: 12, color: "#c8a6ff" } as React.CSSProperties,
+    chip: (color: string) => ({ background: color + "22", color, border: `1px solid ${color}44`, borderRadius: 4, padding: "1px 7px", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" as const }),
+    card: { background: "#111", border: "1px solid #1e1e1e", borderRadius: 10, padding: "18px 20px" } as React.CSSProperties,
+    row: { display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 } as React.CSSProperties,
+    dot: (color: string) => ({ width: 8, height: 8, borderRadius: "50%", background: color, flexShrink: 0, marginTop: 5 }),
+  };
+
+  const models: { intent: string; color: string; model: string; note: string }[] = [
+    { intent: "image_generation", color: "#f97316", model: "gpt-image-1", note: "Generates a new image from scratch" },
+    { intent: "image_edit",       color: "#ec4899", model: "gpt-image-1", note: "Edits the last generated image in chat" },
+    { intent: "reasoning",        color: "#7c6af7", model: "o3-mini",     note: "Step-by-step analysis and math" },
+    { intent: "low_effort",       color: "#94a3b8", model: "gpt-4o-mini", note: "Greetings, small talk, simple questions" },
+    { intent: "everything else",  color: "#3b82f6", model: "gpt-4o",      note: "Code, documents, data, web, PDFs…" },
+  ];
+
+  return (
+    <div>
+      {/* Overview */}
+      <div style={D.card}>
+        <div style={{ ...D.h2, marginBottom: 14 }}>
+          <span style={{ fontSize: 18 }}>🧠</span> How Intent Classification Works
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+          {[
+            ["1", "#7c6af7", "Embed", "Your message is converted into a 1536-dimension vector using OpenAI's text-embedding-3-small model. This vector captures the meaning of your text as numbers."],
+            ["2", "#3b82f6", "Search", "The vector is compared against all stored example embeddings in Supabase using cosine similarity (pgvector). The top 15 most similar examples are retrieved."],
+            ["3", "#22c55e", "Aggregate", "Results are grouped by class. The average similarity score per class is computed. The class with the highest average wins."],
+            ["4", "#e5a64b", "Route", "The winning intent determines which AI model is called — gpt-image-1, o3-mini, gpt-4o-mini, or gpt-4o."],
+          ].map(([num, color, title, desc]) => (
+            <div key={num} style={{ display: "flex", gap: 14, paddingBottom: 16, borderLeft: `2px solid #1e1e1e`, marginLeft: 12, paddingLeft: 20, position: "relative" }}>
+              <div style={{ position: "absolute", left: -9, top: 0, width: 16, height: 16, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#000", flexShrink: 0 }}>{num}</div>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#e8e8e8", marginBottom: 3 }}>{title}</div>
+                <div style={{ fontSize: 12, color: "#888", lineHeight: 1.65 }}>{desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ height: 20 }} />
+
+      {/* Model Routing */}
+      <div style={D.card}>
+        <div style={D.h2}><span>🔀</span> Model Routing</div>
+        <p style={{ ...D.p, marginBottom: 14 }}>Based on the detected intent, the system automatically picks the best model:</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+          {models.map(({ intent, color, model, note }) => (
+            <div key={intent} style={{ display: "flex", alignItems: "center", gap: 10, background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: 7, padding: "8px 12px" }}>
+              <span style={D.chip(color)}>{intent}</span>
+              <span style={{ fontSize: 12, color: "#555", flexShrink: 0 }}>→</span>
+              <code style={D.code}>{model}</code>
+              <span style={{ fontSize: 12, color: "#666", marginLeft: 4 }}>{note}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ height: 20 }} />
+
+      {/* Examples & Embeddings */}
+      <div style={D.card}>
+        <div style={D.h2}><span>📚</span> Classes & Examples</div>
+        <p style={D.p}>Each <strong style={{ color: "#e8e8e8" }}>intent class</strong> is a category (e.g. <code style={D.code}>code</code>, <code style={D.code}>image_generation</code>). Each class has <strong style={{ color: "#e8e8e8" }}>example messages</strong> — real phrases a user might type for that intent.</p>
+        <p style={D.p}>The classifier learns purely from these examples. More examples = better accuracy. Aim for <strong style={{ color: "#e8e8e8" }}>at least 7–10 diverse examples</strong> per class.</p>
+
+        <div style={{ background: "#0d1f0d", border: "1px solid #1a3a1a", borderRadius: 8, padding: "12px 16px", marginTop: 12 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#4ade80", marginBottom: 6 }}>✓ Auto-embedding — no manual step needed</div>
+          <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+            {[
+              "Adding a new example → embedding computed instantly on save",
+              "Editing an existing example → re-embedded automatically on save",
+              "Deleting an example → removed from the vector index immediately",
+            ].map((txt) => (
+              <li key={txt} style={{ fontSize: 12, color: "#6dbb6d", lineHeight: 1.8, paddingLeft: 14, position: "relative" }}>
+                <span style={{ position: "absolute", left: 0 }}>·</span>{txt}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div style={{ height: 20 }} />
+
+      {/* Buttons explained */}
+      <div style={D.card}>
+        <div style={D.h2}><span>🛠</span> Header Buttons Explained</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {[
+            { label: "Seed Examples", color: "#4ade80", desc: "Wipes and re-inserts all built-in examples from lib/intents.ts with fresh embeddings. Use this to reset to defaults or after adding new built-in examples in code. Warning: overwrites any manual examples for seeded classes." },
+            { label: "↺ Recompute Embeddings", color: "#666", desc: "Re-embeds every existing example in the database without deleting anything. Use this if you switch embedding models or notice classification drift. Takes a few seconds for large datasets." },
+            { label: "+ New Class", color: "#9484ff", desc: "Creates a new intent class with a name, description, and color. After creating, click it in the sidebar and add at least 7 examples before using it in chat." },
+          ].map(({ label, color, desc }) => (
+            <div key={label} style={D.row}>
+              <span style={{ ...D.chip(color), marginTop: 2, flexShrink: 0 }}>{label}</span>
+              <span style={{ fontSize: 12, color: "#888", lineHeight: 1.65 }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ height: 20 }} />
+
+      {/* Tips */}
+      <div style={D.card}>
+        <div style={D.h2}><span>💡</span> Tips for Good Classification</div>
+        <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 7 }}>
+          {[
+            ["Use natural language", "Write examples the way a real user would type them, not formal definitions."],
+            ["Vary phrasing", "Include short, long, formal and casual variants. Don't repeat the same sentence slightly rephrased."],
+            ["Cover edge cases", "Add examples that are close to other classes so the boundary is clear."],
+            ["7+ examples minimum", "Below 7 examples, classification is unreliable. More is better up to ~30."],
+            ["Image edit needs prior image", "The image_edit intent only activates the edit endpoint if there is already a generated image earlier in the conversation. Otherwise it falls back to generation."],
+            ["Test after changes", "Use the Test Classification panel above to check your message before sending it to chat."],
+          ].map(([title, desc]) => (
+            <li key={title as string} style={{ display: "flex", gap: 10, background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: 7, padding: "9px 12px" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#e8e8e8", minWidth: 160, flexShrink: 0 }}>{title}</span>
+              <span style={{ fontSize: 12, color: "#777", lineHeight: 1.55 }}>{desc}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div style={{ height: 20 }} />
+
+      {/* 15 classes reference */}
+      <div style={D.card}>
+        <div style={D.h2}><span>🗂</span> Built-in Classes Reference</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+          {[
+            { name: "audio_generation", color: "#f59e0b" }, { name: "code", color: "#3b82f6" },
+            { name: "document_edit", color: "#8b5cf6" }, { name: "document_generation", color: "#6366f1" },
+            { name: "file_analysis", color: "#06b6d4" }, { name: "generate_spreadsheet", color: "#22c55e" },
+            { name: "image_edit", color: "#ec4899" }, { name: "image_generation", color: "#f97316" },
+            { name: "low_effort", color: "#94a3b8" }, { name: "models_information", color: "#a855f7" },
+            { name: "pdf_generation", color: "#ef4444" }, { name: "ppt_generation", color: "#fb923c" },
+            { name: "reasoning", color: "#7c6af7" }, { name: "video_generation", color: "#14b8a6" },
+            { name: "web_surfing", color: "#0ea5e9" },
+          ].map(({ name, color }) => (
+            <span key={name} style={D.chip(color)}>{name}</span>
+          ))}
+        </div>
+        <p style={{ ...D.p, marginTop: 12, marginBottom: 0 }}>Click any class in the sidebar to view and manage its examples.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function IntentsPage() {
   const [classes, setClasses] = useState<IntentClass[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -267,6 +421,9 @@ export default function IntentsPage() {
             )}
           </section>
 
+          {/* Docs — shown when no class selected */}
+          {!selected && <IntentDocs />}
+
           {/* Selected class examples */}
           {selected && selectedClass ? (
             <section>
@@ -320,11 +477,7 @@ export default function IntentsPage() {
                 ))}
               </div>
             </section>
-          ) : (
-            <div style={{ color: S.faint, fontSize: 14, textAlign: "center", marginTop: 60 }}>
-              Select a class from the sidebar to manage its examples.
-            </div>
-          )}
+          ) : null}
         </main>
       </div>
 

@@ -413,8 +413,8 @@ function IntentChatPanel({
 
 // ── Tab button ───────────────────────────────────────────────────────────────
 
-function Tab({ active, onClick, label, badge, color }: {
-  active: boolean; onClick: () => void; label: string; badge: string; color: string;
+function Tab({ active, onClick, label, badge, color, featured }: {
+  active: boolean; onClick: () => void; label: string; badge: string; color: string; featured?: boolean;
 }) {
   return (
     <button
@@ -422,10 +422,15 @@ function Tab({ active, onClick, label, badge, color }: {
       style={{
         flex: 1,
         padding: "10px 16px",
-        background: active ? "#1a1a1a" : "transparent",
+        background: active
+          ? (featured ? `${color}18` : "#1a1a1a")
+          : (featured ? `${color}08` : "transparent"),
         border: "none",
-        borderBottom: active ? `2px solid ${color}` : "2px solid transparent",
-        color: active ? "#e8e8e8" : "#666",
+        borderBottom: active ? `2px solid ${color}` : `2px solid ${featured ? color + "33" : "transparent"}`,
+        boxShadow: featured
+          ? (active ? `inset 0 0 40px ${color}14, 0 2px 12px ${color}22` : `inset 0 0 20px ${color}08`)
+          : "none",
+        color: active ? "#e8e8e8" : (featured ? "#bbb" : "#666"),
         cursor: "pointer",
         fontSize: 13,
         fontWeight: active ? 600 : 400,
@@ -435,21 +440,24 @@ function Tab({ active, onClick, label, badge, color }: {
         gap: 8,
         transition: "all 0.15s",
         fontFamily: "inherit",
+        position: "relative",
       }}
     >
       <span
         style={{
-          background: active ? color : "#2a2a2a",
-          color: active ? "#fff" : "#555",
+          background: active ? color : (featured ? `${color}33` : "#2a2a2a"),
+          color: active ? "#fff" : (featured ? color : "#555"),
           borderRadius: 4,
           padding: "1px 6px",
           fontSize: 10,
           fontWeight: 600,
           letterSpacing: "0.05em",
+          boxShadow: featured && !active ? `0 0 6px ${color}55` : "none",
         }}
       >
         {badge}
       </span>
+      {featured && !active && <span style={{ fontSize: 10, color: color, opacity: 0.7 }}>✦</span>}
       {label}
     </button>
   );
@@ -880,7 +888,7 @@ export default function ChatPage() {
       <div style={{ display: "flex", borderBottom: "1px solid #1e1e1e", background: "#0d0d0d", flexShrink: 0 }}>
         <Tab active={mode === "context"} onClick={() => setMode("context")} label="With Memory" badge="mem0" color="#7c6af7" />
         <Tab active={mode === "bare"} onClick={() => setMode("bare")} label="No Context" badge="fast" color="#2ea87e" />
-        <Tab active={mode === "intent"} onClick={() => setMode("intent")} label="Chat + Mem0 + Intent + Image Gen/Edit" badge="intent" color="#e5a64b" />
+        <Tab active={mode === "intent"} onClick={() => setMode("intent")} label="Chat + Mem0 + Intent + Image Gen/Edit" badge="intent" color="#e5a64b" featured />
       </div>
 
       {mode === "context" && (
