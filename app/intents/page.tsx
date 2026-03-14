@@ -130,7 +130,7 @@ function IntentDocs() {
       <div style={D.card}>
         <div style={D.h2}><span>📚</span> Classes & Examples</div>
         <p style={D.p}>Each <strong style={{ color: "#e8e8e8" }}>intent class</strong> is a category (e.g. <code style={D.code}>code</code>, <code style={D.code}>image_generation</code>). Each class has <strong style={{ color: "#e8e8e8" }}>example messages</strong> — real phrases a user might type for that intent.</p>
-        <p style={D.p}>The classifier learns purely from these examples. More examples = better accuracy. Aim for <strong style={{ color: "#e8e8e8" }}>at least 7–10 diverse examples</strong> per class.</p>
+        <p style={D.p}>The classifier learns purely from these examples. More examples = better accuracy.</p>
 
         <div style={{ background: "#0d1f0d", border: "1px solid #1a3a1a", borderRadius: 8, padding: "12px 16px", marginTop: 12 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: "#4ade80", marginBottom: 6 }}>✓ Auto-embedding — no manual step needed</div>
