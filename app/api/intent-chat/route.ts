@@ -46,6 +46,11 @@ async function classifyIntent(message: string): Promise<{ intent: string; scores
 export async function POST(req: NextRequest) {
   const { messages } = await req.json();
   const currentMessage = messages.at(-1)?.content as string;
+  // Find the most recent assistant image in history (for edits)
+  const prevImageUrl: string | null =
+    [...messages].slice(0, -1).reverse().find(
+      (m: { role: string; imageUrl?: string }) => m.role === "assistant" && m.imageUrl
+    )?.imageUrl ?? null;
   const encoder = new TextEncoder();
 
   // Classify intent and retrieve memories in parallel
@@ -77,22 +82,38 @@ export async function POST(req: NextRequest) {
     ? memoriesResult.map((m: { memory?: string }) => m.memory ?? "").filter(Boolean).join("\n")
     : "";
 
-  // ── Image generation ────────────────────────────────────────────────────────
+  // ── Image generation / edit ──────────────────────────────────────────────────
   if (isImage) {
     const apiStart = Date.now();
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt: currentMessage,
-        n: 1,
-        size: "1024x1024",
-      }),
-    });
+    const useEdit = intent === "image_edit" && prevImageUrl;
+    let res: Response;
+
+    if (useEdit) {
+      // Convert data URL → Buffer → Blob for multipart upload
+      const base64 = prevImageUrl!.split(",")[1];
+      const buffer = Buffer.from(base64, "base64");
+      const formData = new FormData();
+      formData.append("model", "gpt-image-1");
+      formData.append("prompt", currentMessage);
+      formData.append("n", "1");
+      formData.append("size", "1024x1024");
+      formData.append("image", new Blob([buffer], { type: "image/png" }), "image.png");
+
+      res = await fetch("https://api.openai.com/v1/images/edits", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        body: formData,
+      });
+    } else {
+      res = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model: "gpt-image-1", prompt: currentMessage, n: 1, size: "1024x1024" }),
+      });
+    }
 
     const apiMs = Date.now() - apiStart;
 
