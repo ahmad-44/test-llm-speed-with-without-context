@@ -73,11 +73,12 @@ function IntentDocs() {
   };
 
   const models: { intent: string; color: string; model: string; note: string }[] = [
-    { intent: "image_generation", color: "#f97316", model: "gpt-image-1",        note: "Generates a new image from scratch" },
-    { intent: "image_edit",       color: "#ec4899", model: "gpt-image-1",        note: "Edits the last generated image in chat" },
-    { intent: "reasoning",        color: "#7c6af7", model: "gpt-5.4 (effort:high)", note: "Step-by-step analysis and math" },
-    { intent: "low_effort",       color: "#94a3b8", model: "gpt-5.4 (effort:low)",  note: "Greetings, small talk, simple questions" },
-    { intent: "everything else",  color: "#3b82f6", model: "gpt-4o",              note: "Code, documents, data, web, PDFs…" },
+    { intent: "image_generation",   color: "#f97316", model: "gpt-image-1",           note: "Generates a new image from scratch" },
+    { intent: "image_edit",         color: "#ec4899", model: "gpt-image-1",           note: "Edits the last generated image in chat" },
+    { intent: "reasoning",          color: "#7c6af7", model: "gpt-5.4 (effort:high)", note: "Step-by-step analysis and math" },
+    { intent: "low_effort",         color: "#94a3b8", model: "gpt-5.4 (effort:low)",  note: "Greetings, small talk, simple questions" },
+    { intent: "models_information", color: "#a855f7", model: "gpt-5.4",               note: "Questions about AI models and capabilities" },
+    { intent: "everything else",    color: "#3b82f6", model: "gpt-4o",                note: "Code, documents, data, web, PDFs…" },
   ];
 
   return (
@@ -92,7 +93,7 @@ function IntentDocs() {
             ["1", "#7c6af7", "Embed", "Your message is converted into a 1536-dimension vector using OpenAI's text-embedding-3-small model. This vector captures the meaning of your text as numbers."],
             ["2", "#3b82f6", "Search", "The vector is compared against all stored example embeddings in Supabase using cosine similarity (pgvector). The top 15 most similar examples are retrieved."],
             ["3", "#22c55e", "Aggregate", "Results are grouped by class. The average similarity score per class is computed. The class with the highest average wins."],
-            ["4", "#e5a64b", "Route", "The winning intent determines which AI model is called — gpt-image-1, gpt-5.4 (effort:high/low), or gpt-4o."],
+            ["4", "#e5a64b", "Route", "The winning intent determines which AI model is called — gpt-image-1, gpt-5.4 (reasoning/low_effort/models_information), or gpt-4o."],
           ].map(([num, color, title, desc]) => (
             <div key={num} style={{ display: "flex", gap: 14, paddingBottom: 16, borderLeft: `2px solid #1e1e1e`, marginLeft: 12, paddingLeft: 20, position: "relative" }}>
               <div style={{ position: "absolute", left: -9, top: 0, width: 16, height: 16, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#000", flexShrink: 0 }}>{num}</div>

@@ -179,6 +179,8 @@ export function getIntentModel(intentName: string): { model: string; extraParams
       return { model: "gpt-5.4-2026-03-05", extraParams: { reasoning_effort: "high" } };
     case "low_effort":
       return { model: "gpt-5.4-2026-03-05", extraParams: { reasoning_effort: "low" } };
+    case "models_information":
+      return { model: "gpt-5.4-2026-03-05" };
     default:
       return { model: "gpt-4o" };
   }
