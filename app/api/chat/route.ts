@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     try {
       const memories = await mem0.search(currentQuery, { userId: USER_ID, limit: 8 });
       if (Array.isArray(memories) && memories.length > 0) {
-        memContext = memories.map((m: { memory: string }) => m.memory).join("\n");
+        memContext = memories.map((m) => m.memory ?? "").filter(Boolean).join("\n");
       }
     } catch {}
 
