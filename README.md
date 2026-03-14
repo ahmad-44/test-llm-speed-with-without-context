@@ -68,6 +68,7 @@ Browser (React)
             └── [text intent]
                   ├── Build system prompt (+ capability details if models_information)
                   ├── Inject mem0 recalled context into system prompt
+                  ├── Send ONLY current message (no raw history — mem0 handles context)
                   ├── fetch OpenAI /v1/chat/completions (SSE stream, + extraParams)
                   └── SSE output: __meta event first → raw OpenAI stream
 ```
@@ -147,8 +148,13 @@ mem0 provides **semantic long-term memory** — not a raw chat history dump, but
 3. **Injection** — Retrieved memories are formatted as `Recalled context:` in the system prompt before the AI call
 
 **Key difference vs naive full-history sending:**
-- Full history: sends every message every time — grows token cost with every turn
-- mem0: sends only semantically relevant past context — cost stays flat, relevance stays high
+
+| Approach | What gets sent | Token cost | TTFT over time |
+|----------|---------------|------------|----------------|
+| Raw history (`messages.slice(-N)`) | Every past message in a window | Grows each turn | Gets slower with every message |
+| mem0 (Smart Chat) | Only semantically relevant memories | Stays flat | Consistent regardless of conversation length |
+
+**Smart Chat sends only the current message to the API** — no raw conversation history at all. The system prompt contains only the mem0-recalled context (top 5 relevant memories). This means TTFT is the same on message 1 as it is on message 50.
 
 **In Smart Chat:** mem0 search runs in parallel with intent classification, so it adds zero extra latency (both complete before the AI call starts).
 
