@@ -158,10 +158,32 @@ function IntentDocs() {
             { label: "Seed Examples", color: "#4ade80", desc: "Wipes and re-inserts all built-in examples from lib/intents.ts with fresh embeddings. Use this to reset to defaults or after adding new built-in examples in code. Warning: overwrites any manual examples for seeded classes." },
             { label: "↺ Recompute Embeddings", color: "#666", desc: "Re-embeds every existing example in the database without deleting anything. Use this if you switch embedding models or notice classification drift. Takes a few seconds for large datasets." },
             { label: "+ New Class", color: "#9484ff", desc: "Creates a new intent class with a name, description, and color. After creating, click it in the sidebar and add at least 7 examples before using it in chat." },
+            { label: "✨ AI Generate Examples", color: "#7c6af7", desc: "Visible when a class is selected. Uses GPT-4o-mini to generate N diverse, realistic examples for that class in batches of 100. Examples are embedded and saved automatically. Duplicates are silently skipped via a unique (class_name, message) constraint." },
           ].map(({ label, color, desc }) => (
             <div key={label} style={D.row}>
               <span style={{ ...D.chip(color), marginTop: 2, flexShrink: 0 }}>{label}</span>
               <span style={{ fontSize: 12, color: "#888", lineHeight: 1.65 }}>{desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ height: 20 }} />
+
+      {/* Scoring explained */}
+      <div style={D.card}>
+        <div style={D.h2}><span>📊</span> How Confidence Scores Work</div>
+        <p style={D.p}>The score shown (e.g. "72% confidence") is the <strong style={{ color: "#e8e8e8" }}>average cosine similarity</strong> of the top 15 nearest examples for that class — not the score of a single best match.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+          {[
+            ["Why scores look lower than expected", "Even an exact copy of an example won't show 100%. Cosine similarity between two independently computed embeddings of the same text lands at ~0.99 due to floating point rounding, and then it's averaged with the other 14 retrieved results — which brings the displayed number down further."],
+            ["The winner is still correct", "The winning class is the one with the highest average, so even a 55% score beats a 40% score. The classifier picks the right intent even when absolute numbers look low."],
+            ["More examples = more stable scores", "With 500 examples per class the average is computed over many diverse hits, dampening outliers. This makes the classifier more robust than with 7–30 examples, even though individual scores may look similar."],
+            ["Why top-15 average (not max)", "Using the best single match would be fragile — one rogue example that overlaps two classes could hijack the result. Averaging the top 15 balances precision and stability, especially at higher example counts."],
+          ].map(([title, desc]) => (
+            <div key={title as string} style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", borderRadius: 7, padding: "9px 12px" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#e8e8e8", marginBottom: 3 }}>{title}</div>
+              <div style={{ fontSize: 12, color: "#777", lineHeight: 1.55 }}>{desc}</div>
             </div>
           ))}
         </div>
@@ -178,6 +200,7 @@ function IntentDocs() {
             ["Vary phrasing", "Include short, long, formal and casual variants. Don't repeat the same sentence slightly rephrased."],
             ["Cover edge cases", "Add examples that are close to other classes so the boundary is clear."],
             ["7+ examples minimum", "Below 7 examples, classification is unreliable. More is better up to ~30."],
+            ["AI Generate for scale", "Use the '✨ AI Generate Examples' button on any class to generate up to 500 diverse examples instantly using GPT-4o-mini. Duplicates are automatically skipped."],
             ["Image edit needs prior image", "The image_edit intent only activates the edit endpoint if there is already a generated image earlier in the conversation. Otherwise it falls back to generation."],
             ["Test after changes", "Use the Test Classification panel above to check your message before sending it to chat."],
           ].map(([title, desc]) => (
