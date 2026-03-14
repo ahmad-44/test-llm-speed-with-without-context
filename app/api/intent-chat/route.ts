@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
         memContext ? `Recalled context:\n${memContext}` : "",
       ].filter(Boolean).join("\n"),
     },
-    ...messages.slice(-8),
+    { role: "user", content: currentMessage },
   ];
 
   const apiStart = Date.now();
