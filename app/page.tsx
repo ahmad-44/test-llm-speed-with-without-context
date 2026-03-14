@@ -78,36 +78,150 @@ function fmtMs(ms: number) {
   return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(2)}s`;
 }
 
+function Tooltip({ text, children }: { text: string; children: React.ReactNode }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div
+      style={{ position: "relative", display: "inline-block" }}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show && (
+        <div style={{
+          position: "absolute", bottom: "calc(100% + 6px)", left: "50%",
+          transform: "translateX(-50%)", background: "#1e1e1e",
+          border: "1px solid #333", borderRadius: 6, padding: "6px 10px",
+          fontSize: 11, color: "#ccc", whiteSpace: "nowrap", zIndex: 50,
+          pointerEvents: "none", lineHeight: 1.5,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+        }}>
+          {text}
+          <div style={{
+            position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)",
+            borderLeft: "5px solid transparent", borderRight: "5px solid transparent",
+            borderTop: "5px solid #333",
+          }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProfileTable({ profile, accentColor, isContext }: { profile: Profile; accentColor: string; isContext: boolean }) {
+  const [showInfo, setShowInfo] = useState(false);
+
   const cells = [
-    { label: "TTFT",   value: fmtMs(profile.ttft),             title: "Time to first token (client)" },
-    { label: "Total",  value: fmtMs(profile.total),            title: "Total response time (client)" },
-    { label: "Tokens", value: String(profile.tokens),          title: "Tokens streamed" },
-    { label: "Tok/s",  value: profile.tokPerSec.toFixed(1),    title: "Tokens per second" },
-    ...(isContext ? [{ label: "mem0", value: fmtMs(profile.mem0Ms), title: "mem0 memory search (server)" }] : []),
-    { label: "API",    value: fmtMs(profile.apiMs),            title: "OpenAI connect time (server)" },
+    {
+      label: "TTFT",
+      value: fmtMs(profile.ttft),
+      tooltip: "Time to First Token — measured client-side from when the request was sent to when the first token arrived.",
+    },
+    {
+      label: "Total",
+      value: fmtMs(profile.total),
+      tooltip: "Total response time — client-side from send to the very last token received.",
+    },
+    {
+      label: "Tokens",
+      value: String(profile.tokens),
+      tooltip: "Number of tokens streamed from the model (each SSE delta counts as one token).",
+    },
+    {
+      label: "Tok/s",
+      value: profile.tokPerSec.toFixed(1),
+      tooltip: "Tokens per second during the streaming phase only: Tokens ÷ (Total − TTFT).",
+    },
+    ...(isContext ? [{
+      label: "mem0",
+      value: fmtMs(profile.mem0Ms),
+      tooltip: "Time the server spent searching mem0 for relevant memories before calling OpenAI.",
+    }] : []),
+    {
+      label: "API",
+      value: fmtMs(profile.apiMs),
+      tooltip: "Time the server spent connecting to OpenAI and waiting for the stream to open (excludes mem0).",
+    },
+  ];
+
+  const infoRows = [
+    { name: "TTFT",  formula: "firstTokenAt − requestSent",               source: "client" },
+    { name: "Total", formula: "lastTokenAt − requestSent",                source: "client" },
+    { name: "Tokens",formula: "count of SSE delta events",                source: "client" },
+    { name: "Tok/s", formula: "Tokens ÷ (Total − TTFT) × 1000",          source: "client" },
+    ...(isContext ? [{ name: "mem0", formula: "mem0.search() end − start",  source: "server" }] : []),
+    { name: "API",   formula: "fetch(OpenAI) end − start",                source: "server" },
   ];
 
   return (
-    <div style={{ marginTop: 10, display: "flex", borderRadius: 6, border: "1px solid #222", overflow: "hidden", width: "fit-content", maxWidth: "100%" }}>
-      {cells.map((cell, i) => (
-        <div
-          key={cell.label}
-          title={cell.title}
+    <div style={{ marginTop: 10 }}>
+      {/* Cells row */}
+      <div style={{ display: "flex", alignItems: "stretch", width: "fit-content", maxWidth: "100%" }}>
+        <div style={{ display: "flex", borderRadius: "6px 0 0 6px", border: "1px solid #222", overflow: "hidden" }}>
+          {cells.map((cell, i) => (
+            <Tooltip key={cell.label} text={cell.tooltip}>
+              <div style={{
+                padding: "5px 10px", cursor: "default",
+                borderRight: i < cells.length - 1 ? "1px solid #222" : "none",
+                minWidth: 52, background: "#0d0d0d",
+              }}>
+                <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>
+                  {cell.label}
+                </div>
+                <div style={{ fontSize: 12, color: accentColor, fontFamily: "monospace", fontWeight: 600 }}>
+                  {cell.value}
+                </div>
+              </div>
+            </Tooltip>
+          ))}
+        </div>
+
+        {/* ⓘ button */}
+        <button
+          onClick={() => setShowInfo((v) => !v)}
+          title="How values are calculated"
           style={{
-            padding: "5px 10px",
-            borderRight: i < cells.length - 1 ? "1px solid #222" : "none",
-            minWidth: 52,
+            background: showInfo ? "#1e1e1e" : "#0d0d0d",
+            border: "1px solid #222", borderLeft: "none",
+            borderRadius: "0 6px 6px 0", padding: "0 8px",
+            color: showInfo ? accentColor : "#444", cursor: "pointer",
+            fontSize: 12, fontFamily: "inherit", display: "flex",
+            alignItems: "center", justifyContent: "center",
+            transition: "color 0.15s",
           }}
         >
-          <div style={{ fontSize: 9, color: "#555", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>
-            {cell.label}
+          ⓘ
+        </button>
+      </div>
+
+      {/* Expandable info panel */}
+      {showInfo && (
+        <div style={{
+          marginTop: 6, border: "1px solid #222", borderRadius: 6,
+          background: "#0d0d0d", overflow: "hidden", fontSize: 11,
+          width: "fit-content", maxWidth: "100%",
+        }}>
+          <div style={{ padding: "6px 10px", borderBottom: "1px solid #1a1a1a", color: "#666", fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+            How each value is calculated
           </div>
-          <div style={{ fontSize: 12, color: accentColor, fontFamily: "monospace", fontWeight: 600 }}>
-            {cell.value}
-          </div>
+          {infoRows.map((row, i) => (
+            <div key={row.name} style={{
+              display: "flex", gap: 0, alignItems: "center",
+              borderBottom: i < infoRows.length - 1 ? "1px solid #1a1a1a" : "none",
+            }}>
+              <div style={{ padding: "5px 10px", minWidth: 52, color: accentColor, fontFamily: "monospace", fontWeight: 600, fontSize: 11 }}>
+                {row.name}
+              </div>
+              <div style={{ padding: "5px 10px", color: "#888", borderLeft: "1px solid #1a1a1a", flex: 1, fontFamily: "monospace", fontSize: 11 }}>
+                {row.formula}
+              </div>
+              <div style={{ padding: "5px 10px", borderLeft: "1px solid #1a1a1a", color: "#555", fontSize: 10, minWidth: 46, textAlign: "center" }}>
+                {row.source}
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
