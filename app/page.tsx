@@ -176,38 +176,36 @@ function ProfileTable({ profile, accentColor, isContext }: { profile: Profile; a
           ))}
         </div>
 
-        {/* ⓘ toggle */}
+        {/* Formulas toggle */}
         <button
           onClick={() => setShowInfo((v) => !v)}
-          title="Show formulas"
           style={{
             background: showInfo ? "#1e1e1e" : "#0d0d0d",
             border: "1px solid #222", borderLeft: "none",
-            borderRadius: 0, padding: "0 8px",
-            color: showInfo ? accentColor : "#444", cursor: "pointer",
-            fontSize: 12, fontFamily: "inherit", display: "flex",
+            borderRadius: 0, padding: "0 10px",
+            color: showInfo ? accentColor : "#555", cursor: "pointer",
+            fontSize: 11, fontFamily: "inherit", display: "flex",
             alignItems: "center", justifyContent: "center",
-            transition: "color 0.15s",
+            transition: "color 0.15s", whiteSpace: "nowrap",
           }}
         >
-          ⓘ
+          formulas
         </button>
 
         {/* Explain link */}
         <a
           href="/explain"
-          title="What do these numbers mean?"
           style={{
             background: "#0d0d0d", border: "1px solid #222", borderLeft: "none",
-            borderRadius: "0 6px 6px 0", padding: "0 8px",
-            color: "#444", fontSize: 11, display: "flex",
+            borderRadius: "0 6px 6px 0", padding: "0 10px",
+            color: "#555", fontSize: 11, display: "flex",
             alignItems: "center", justifyContent: "center",
-            textDecoration: "none", transition: "color 0.15s",
+            textDecoration: "none", transition: "color 0.15s", whiteSpace: "nowrap",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.color = accentColor)}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#444")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#555")}
         >
-          ?
+          what's this?
         </a>
       </div>
 
