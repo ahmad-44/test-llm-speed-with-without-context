@@ -102,7 +102,10 @@ export async function POST(req: NextRequest) {
     }
 
     const json = await res.json();
-    const imageUrl = json.data?.[0]?.url ?? json.data?.[0]?.b64_json;
+    const raw = json.data?.[0];
+    // gpt-image-1 returns b64_json; wrap it as a data URL so <img> can render it
+    const imageUrl = raw?.url
+      ?? (raw?.b64_json ? `data:image/png;base64,${raw.b64_json}` : null);
 
     return new Response(
       JSON.stringify({
