@@ -31,8 +31,8 @@ export default function ExplainPage() {
 
             {[
               { icon: "📤", color: "#7c6af7", label: "You hit Send", sub: "The clock starts here", time: "0ms" },
-              { icon: "🧠", color: "#2ea87e", label: "App searches your memory (mem0)", sub: "Looks up relevant things you've said before", time: "mem0" },
-              { icon: "📡", color: "#e5a64b", label: "Server calls OpenAI", sub: "Connects and waits for OpenAI to pick up", time: "API" },
+              { icon: "⚡", color: "#e5a64b", label: "Intent classified + memory searched", sub: "Smart Chat only: these two run in parallel before calling the AI", time: "Intent + mem0" },
+              { icon: "📡", color: "#e5a64b", label: "Server calls the routed AI model", sub: "Connects and waits for the chosen model to pick up", time: "API" },
               { icon: "💬", color: "#7c6af7", label: "First word arrives", sub: "The AI starts typing — you see the first character", time: "TTFT" },
               { icon: "⏳", color: "#888", label: "Words keep streaming in...", sub: "Tokens arrive one by one", time: "Tok/s" },
               { icon: "✅", color: "#2ea87e", label: "Last word arrives", sub: "The full reply is done", time: "Total" },
@@ -122,6 +122,26 @@ export default function ExplainPage() {
             formula: "Time from calling OpenAI to stream opening",
             good: "This is mostly OpenAI's server speed. You can't control it.",
           },
+          {
+            label: "Intent",
+            color: "#e5a64b",
+            full: "Intent Classification Time",
+            source: "measured on the server (Smart Chat only)",
+            simple: "How long it took to figure out what you were asking for.",
+            analogy: "Imagine a receptionist who listens to your first sentence and instantly decides which department to transfer you to — coding, image generation, research, etc. Intent time is how long that routing decision took.",
+            formula: "Time to embed message + vector search in Supabase",
+            good: "Under 500ms is fast. Runs in parallel with mem0, so it doesn't always add to TTFT.",
+          },
+          {
+            label: "Model",
+            color: "#94a3b8",
+            full: "Model Used",
+            source: "determined by intent (Smart Chat only)",
+            simple: "Which AI model answered your message.",
+            analogy: "A hospital has different specialists — a GP for simple questions, a surgeon for complex ones. The intent classifier is the triage nurse that decides which specialist you see. Model shows you which specialist was chosen.",
+            formula: "getIntentModel(intent) → gpt-4o-mini / gpt-4o / o3-mini / gpt-image-1",
+            good: "Faster/cheaper models (gpt-4o-mini) are used for simple messages. Heavier models (o3-mini) for reasoning.",
+          },
         ].map((metric) => (
           <div key={metric.label} style={{ marginBottom: 20, border: "1px solid #1e1e1e", borderRadius: 10, overflow: "hidden" }}>
             {/* Header */}
@@ -178,13 +198,15 @@ export default function ExplainPage() {
             How the numbers relate
           </div>
           {[
-            { formula: "TTFT  ≈  mem0 + API + network overhead", color: "#7c6af7" },
-            { formula: "Total  =  TTFT + streaming time", color: "#7c6af7" },
-            { formula: "Streaming time  =  Total − TTFT", color: "#888" },
-            { formula: "Tok/s  =  Tokens ÷ Streaming time", color: "#888" },
+            { formula: "TTFT  ≈  max(Intent, mem0) + API + network overhead", color: "#7c6af7", note: "Smart Chat — Intent & mem0 run in parallel" },
+            { formula: "TTFT  ≈  mem0 + API + network overhead", color: "#7c6af7", note: "With Memory — no intent step" },
+            { formula: "Total  =  TTFT + streaming time", color: "#7c6af7", note: "" },
+            { formula: "Streaming time  =  Total − TTFT", color: "#888", note: "" },
+            { formula: "Tok/s  =  Tokens ÷ Streaming time", color: "#888", note: "" },
           ].map((row) => (
-            <div key={row.formula} style={{ fontFamily: "monospace", fontSize: 13, color: row.color, marginBottom: 8, paddingLeft: 8, borderLeft: `2px solid ${row.color}33` }}>
-              {row.formula}
+            <div key={row.formula} style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8, paddingLeft: 8, borderLeft: `2px solid ${row.color}33` }}>
+              <span style={{ fontFamily: "monospace", fontSize: 13, color: row.color }}>{row.formula}</span>
+              {row.note && <span style={{ fontSize: 11, color: "#555", fontStyle: "italic" }}>{row.note}</span>}
             </div>
           ))}
         </div>
