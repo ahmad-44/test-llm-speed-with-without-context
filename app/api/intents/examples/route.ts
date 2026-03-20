@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   const { data, error } = await supabase
     .from("intent_examples")
-    .upsert({ class_name, message, embedding }, { onConflict: "class_name,message", ignoreDuplicates: true })
+    .insert({ class_name, message, embedding })
     .select("id, class_name, message, created_at")
     .single();
 

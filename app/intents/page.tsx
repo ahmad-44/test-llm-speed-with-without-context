@@ -342,6 +342,11 @@ export default function IntentsPage() {
       body: JSON.stringify({ class_name: selected, message: newExample }),
     });
     const added = await res.json();
+    if (!res.ok) {
+      alert(`Failed to save: ${added.error}`);
+      setAdding(false);
+      return;
+    }
     setExamples((prev) => [...prev, added]);
     setNewExample("");
     setAdding(false);
